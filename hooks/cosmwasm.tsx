@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { connectKeplr } from 'services/keplr'
 import { SigningCosmWasmClient, CosmWasmClient } from '@cosmjs/cosmwasm-stargate'
+import { SigningCosmosClient } from '@cosmjs/launchpad'
 
 export interface ISigningCosmWasmClientContext {
   walletAddress: string
@@ -16,9 +17,9 @@ const PUBLIC_RPC_ENDPOINT = process.env.NEXT_PUBLIC_CHAIN_RPC_ENDPOINT || ''
 const PUBLIC_CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN_ID
 
 export const useSigningCosmWasmClient = (): ISigningCosmWasmClientContext => {
-  const [client, setClient] = useState < CosmWasmClient | null > (null)
+  const [client, setClient] = useState<CosmWasmClient | null>(null)
   const [signingClient, setSigningClient] =
-    useState < SigningCosmWasmClient | null > (null)
+    useState<SigningCosmWasmClient | null>(null)
   const [walletAddress, setWalletAddress] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -36,6 +37,7 @@ export const useSigningCosmWasmClient = (): ISigningCosmWasmClientContext => {
       // enable website to access kepler
       await (window as any).keplr.enable(PUBLIC_CHAIN_ID)
 
+
       console.log("connectWallet log - 3");
 
       // get offline signer for signing txs
@@ -44,23 +46,22 @@ export const useSigningCosmWasmClient = (): ISigningCosmWasmClientContext => {
       console.log("connectWallet log - 4 : ", offlineSigner);
 
       // make client
-      setClient(await CosmWasmClient.connect(PUBLIC_RPC_ENDPOINT))
+      // setClient(await CosmWasmClient.connect(PUBLIC_RPC_ENDPOINT))
 
       console.log("connectWallet log - 5");
-
-      // make client
-      setSigningClient(
-        await SigningCosmWasmClient.connectWithSigner(
-          PUBLIC_RPC_ENDPOINT,
-          offlineSigner
-        )
-      )
 
       // get user address
       const [{ address }] = await offlineSigner.getAccounts()
       console.log("connectWallet log - 6", address);
       setWalletAddress(address)
 
+      // make client
+      const tempClient = await SigningCosmWasmClient.connectWithSigner(
+        PUBLIC_RPC_ENDPOINT,
+        address[0],
+        offlineSigner
+      );
+      setSigningClient(tempClient);
       // setLoading(false)
     } catch (error) {
       console.log("connectWallet log - err", error);
